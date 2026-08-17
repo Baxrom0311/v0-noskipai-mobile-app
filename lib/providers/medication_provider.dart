@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noskipai/services/api_service.dart';
 import 'package:noskipai/models/medication.dart';
+import 'package:noskipai/providers/services_provider.dart';
 
 class MedicationState {
   final List<Medication> medications;
@@ -13,15 +14,17 @@ class MedicationState {
     this.error,
   });
 
+  static const _sentinel = Object();
+
   MedicationState copyWith({
     List<Medication>? medications,
     bool? isLoading,
-    String? error,
+    Object? error = _sentinel,
   }) {
     return MedicationState(
       medications: medications ?? this.medications,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
 }
@@ -56,6 +59,7 @@ class MedicationNotifier extends StateNotifier<MedicationState> {
     required String dosage,
     required String frequency,
     required List<String> schedule,
+    required DateTime startDate,
     String? notes,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
@@ -65,6 +69,7 @@ class MedicationNotifier extends StateNotifier<MedicationState> {
         dosage: dosage,
         frequency: frequency,
         schedule: schedule,
+        startDate: startDate,
         notes: notes,
       );
       
@@ -85,8 +90,4 @@ class MedicationNotifier extends StateNotifier<MedicationState> {
 final medicationProvider = StateNotifierProvider<MedicationNotifier, MedicationState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return MedicationNotifier(apiService);
-});
-
-final apiServiceProvider = Provider<ApiService>((ref) {
-  return ApiService();
 });

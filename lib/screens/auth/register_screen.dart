@@ -12,18 +12,14 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _fullNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   @override
   void dispose() {
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _emailController.dispose();
+    _fullNameController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -66,38 +62,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 32),
-                // First name
+                // Full name
                 TextField(
-                  controller: _firstNameController,
+                  controller: _fullNameController,
                   decoration: InputDecoration(
-                    labelText: 'First Name',
+                    labelText: 'Full Name',
                     prefixIcon: const Icon(Icons.person_outlined),
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Last name
-                TextField(
-                  controller: _lastNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Last Name',
-                    prefixIcon: const Icon(Icons.person_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Email
-                TextField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Phone (optional)
+                // Phone
                 TextField(
                   controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Phone Number (optional)',
+                    labelText: 'Phone Number (+998XXXXXXXXX)',
                     prefixIcon: const Icon(Icons.phone_outlined),
                   ),
                 ),
@@ -141,17 +120,29 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             }
 
                             await ref.read(authProvider.notifier).register(
-                              _emailController.text,
+                              _fullNameController.text,
+                              _phoneController.text,
                               _passwordController.text,
-                              _firstNameController.text,
-                              _lastNameController.text,
-                              _phoneController.text.isEmpty
-                                  ? null
-                                  : _phoneController.text,
                             );
 
-                            if (mounted && !authState.isLoading) {
+                            if (!mounted) return;
+
+                            // Re-read the state fresh after the await — the
+                            // 'authState' captured at the last build() is
+                            // stale and does not reflect the outcome of the
+                            // register call above.
+                            final freshState = ref.read(authProvider);
+
+                            if (freshState.error == null &&
+                                freshState.user != null) {
                               context.go('/dashboard');
+                            } else if (freshState.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(freshState.error!),
+                                  backgroundColor: AppTheme.errorColor,
+                                ),
+                              );
                             }
                           },
                     child: authState.isLoading

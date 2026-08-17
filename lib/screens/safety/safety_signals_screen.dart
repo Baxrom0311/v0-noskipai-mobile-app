@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noskipai/config/app_theme.dart';
-import 'package:noskipai/providers/chat_provider.dart';
+import 'package:noskipai/providers/services_provider.dart';
 import 'package:noskipai/widgets/glassmorphic_container.dart';
 
 class SafetySignalsScreen extends ConsumerStatefulWidget {

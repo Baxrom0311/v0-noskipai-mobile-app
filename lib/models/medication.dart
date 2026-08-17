@@ -1,13 +1,21 @@
+// Matches schemas/medication.py MedicationResponse / response_utils.serialize_medication
+// on the real backend. Dart property names `schedule`, `notes`, `active` and
+// `userId` are kept (rather than renamed to times/instructions/is_active/patient_id)
+// because other app code already reads them by these names; only the JSON wire
+// keys are translated to/from the real backend field names.
 class Medication {
-  final String id;
-  final String userId;
+  final int id;
+  final int userId; // backend: patient_id
   final String name;
   final String dosage;
   final String frequency;
-  final List<String> schedule; // Times in 24h format (e.g., ["08:00", "20:00"])
-  final String? notes;
-  final bool active;
+  final List<String> schedule; // backend: times (HH:MM strings)
+  final String? notes; // backend: instructions
+  final bool active; // backend: is_active
   final DateTime createdAt;
+  final DateTime startDate; // backend: start_date (required on create)
+  final DateTime? endDate;
+  final String? disease;
 
   Medication({
     required this.id,
@@ -19,39 +27,59 @@ class Medication {
     this.notes,
     required this.active,
     required this.createdAt,
+    required this.startDate,
+    this.endDate,
+    this.disease,
   });
 
   factory Medication.fromJson(Map<String, dynamic> json) {
     return Medication(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
+      id: json['id'] as int,
+      userId: json['patient_id'] as int,
       name: json['name'] as String,
       dosage: json['dosage'] as String,
       frequency: json['frequency'] as String,
-      schedule: List<String>.from(json['schedule'] as List),
-      notes: json['notes'] as String?,
-      active: json['active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
+      schedule: List<String>.from(json['times'] as List? ?? const []),
+      notes: json['instructions'] as String?,
+      active: json['is_active'] as bool? ?? true,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'] as String)
+          : DateTime.now(),
+      startDate: json['start_date'] != null
+          ? DateTime.parse(json['start_date'] as String)
+          : DateTime.now(),
+      endDate: json['end_date'] != null ? DateTime.parse(json['end_date'] as String) : null,
+      disease: json['disease'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'user_id': userId,
+      'patient_id': userId,
       'name': name,
       'dosage': dosage,
       'frequency': frequency,
-      'schedule': schedule,
-      'notes': notes,
-      'active': active,
+      'times': schedule,
+      'instructions': notes,
+      'is_active': active,
       'created_at': createdAt.toIso8601String(),
+      'start_date': _dateOnly(startDate),
+      'end_date': endDate != null ? _dateOnly(endDate!) : null,
+      'disease': disease,
     };
   }
 
+  static String _dateOnly(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
+  }
+
   Medication copyWith({
-    String? id,
-    String? userId,
+    int? id,
+    int? userId,
     String? name,
     String? dosage,
     String? frequency,
@@ -59,6 +87,9 @@ class Medication {
     String? notes,
     bool? active,
     DateTime? createdAt,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? disease,
   }) {
     return Medication(
       id: id ?? this.id,
@@ -70,6 +101,9 @@ class Medication {
       notes: notes ?? this.notes,
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      disease: disease ?? this.disease,
     );
   }
 }

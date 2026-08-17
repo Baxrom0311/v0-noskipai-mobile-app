@@ -55,7 +55,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          '${authState.user?.firstName[0]}${authState.user?.lastName[0]}',
+                          _initials(authState.user?.fullName),
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryColor,
@@ -68,14 +68,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '${authState.user?.firstName} ${authState.user?.lastName}',
+                          authState.user?.fullName ?? '',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          authState.user?.email ?? '',
+                          authState.user?.phone ?? '',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppTheme.textSecondaryColor,
                           ),
@@ -254,6 +254,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  String _initials(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) return '';
+    final parts = fullName.trim().split(RegExp(r'\s+'));
+    final first = parts.first.substring(0, 1);
+    final last = parts.length > 1 ? parts.last.substring(0, 1) : '';
+    return (first + last).toUpperCase();
   }
 
   Widget _buildInfoRow(String label, String value) {

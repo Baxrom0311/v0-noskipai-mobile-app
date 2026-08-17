@@ -2,11 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noskipai/services/api_service.dart';
 import 'package:noskipai/models/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-// API Service Provider
-final apiServiceProvider = Provider<ApiService>((ref) {
-  return ApiService();
-});
+import 'package:noskipai/providers/services_provider.dart';
 
 // Auth State Notifier
 class AuthState {
@@ -22,17 +18,19 @@ class AuthState {
     this.error,
   });
 
+  static const _sentinel = Object();
+
   AuthState copyWith({
-    User? user,
-    String? token,
+    Object? user = _sentinel,
+    Object? token = _sentinel,
     bool? isLoading,
-    String? error,
+    Object? error = _sentinel,
   }) {
     return AuthState(
-      user: user ?? this.user,
-      token: token ?? this.token,
+      user: identical(user, _sentinel) ? this.user : user as User?,
+      token: identical(token, _sentinel) ? this.token : token as String?,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
 }
@@ -42,13 +40,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this.apiService) : super(AuthState());
 
-  Future<void> login(String email, String password) async {
+  Future<void> login(String phone, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      final response = await apiService.login(email, password);
+      final response = await apiService.login(phone, password);
       final user = User.fromJson(response['user']);
       final token = response['access_token'];
-      
+
       state = state.copyWith(
         user: user,
         token: token,
@@ -63,20 +61,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> register(
-    String email,
+    String fullName,
+    String phone,
     String password,
-    String firstName,
-    String lastName,
-    String? phoneNumber,
   ) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final response = await apiService.register(
-        email,
-        password,
-        firstName,
-        lastName,
-        phoneNumber,
+        fullName: fullName,
+        phone: phone,
+        password: password,
       );
       final user = User.fromJson(response['user']);
       final token = response['access_token'];

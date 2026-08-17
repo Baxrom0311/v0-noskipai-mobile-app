@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noskipai/services/api_service.dart';
 import 'package:noskipai/models/medication_adherence.dart';
+import 'package:noskipai/providers/services_provider.dart';
 
 class AdherenceState {
   final List<MedicationAdherence> history;
@@ -17,19 +18,21 @@ class AdherenceState {
     this.error,
   });
 
+  static const _sentinel = Object();
+
   AdherenceState copyWith({
     List<MedicationAdherence>? history,
     double? weeklyRate,
     double? monthlyRate,
     bool? isLoading,
-    String? error,
+    Object? error = _sentinel,
   }) {
     return AdherenceState(
       history: history ?? this.history,
       weeklyRate: weeklyRate ?? this.weeklyRate,
       monthlyRate: monthlyRate ?? this.monthlyRate,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
 }
@@ -90,8 +93,4 @@ final adherenceProvider =
     StateNotifierProvider<AdherenceNotifier, AdherenceState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return AdherenceNotifier(apiService);
-});
-
-final apiServiceProvider = Provider<ApiService>((ref) {
-  return ApiService();
 });

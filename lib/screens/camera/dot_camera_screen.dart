@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:camera/camera.dart';
@@ -260,5 +262,3 @@ class CameraOverlayPainter extends CustomPainter {
   @override
   bool shouldRepaint(CameraOverlayPainter oldDelegate) => false;
 }
-
-import 'dart:io';

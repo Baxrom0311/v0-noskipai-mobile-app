@@ -12,12 +12,12 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -79,12 +79,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 48),
-                // Email field
+                // Phone field
                 TextField(
-                  controller: _emailController,
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email_outlined),
+                    labelText: 'Phone Number (+998XXXXXXXXX)',
+                    prefixIcon: const Icon(Icons.phone_outlined),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -121,11 +122,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ? null
                         : () async {
                             await ref.read(authProvider.notifier).login(
-                              _emailController.text,
+                              _phoneController.text,
                               _passwordController.text,
                             );
-                            if (mounted && !authState.isLoading) {
+
+                            if (!mounted) return;
+
+                            // Re-read the state fresh after the await — the
+                            // 'authState' captured at the last build() is
+                            // stale and does not reflect the outcome of the
+                            // login call above.
+                            final freshState = ref.read(authProvider);
+
+                            if (freshState.error == null &&
+                                freshState.user != null) {
                               context.go('/dashboard');
+                            } else if (freshState.error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(freshState.error!),
+                                  backgroundColor: AppTheme.errorColor,
+                                ),
+                              );
                             }
                           },
                     child: authState.isLoading

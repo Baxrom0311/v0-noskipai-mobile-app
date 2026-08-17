@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:noskipai/services/api_service.dart';
 import 'package:noskipai/models/chat_message.dart';
+import 'package:noskipai/providers/services_provider.dart';
 
 class ChatState {
   final List<ChatMessage> messages;
@@ -9,11 +10,13 @@ class ChatState {
 
   ChatState({this.messages = const [], this.isLoading = false, this.error});
 
-  ChatState copyWith({List<ChatMessage>? messages, bool? isLoading, String? error}) {
+  static const _sentinel = Object();
+
+  ChatState copyWith({List<ChatMessage>? messages, bool? isLoading, Object? error = _sentinel}) {
     return ChatState(
       messages: messages ?? this.messages,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: identical(error, _sentinel) ? this.error : error as String?,
     );
   }
 }
@@ -66,5 +69,3 @@ final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
   return ChatNotifier(apiService);
 });
-
-final apiServiceProvider = Provider<ApiService>((ref) => ApiService());

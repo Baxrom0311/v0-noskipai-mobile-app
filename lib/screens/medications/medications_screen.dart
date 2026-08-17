@@ -102,66 +102,100 @@ class _MedicationsScreenState extends ConsumerState<MedicationsScreen> {
     final nameController = TextEditingController();
     final dosageController = TextEditingController();
     final frequencyController = TextEditingController();
+    // The backend's MedicationCreate schema requires a start_date that this
+    // form did not previously collect (see schemas/medication.py). Default to
+    // today and let the user change it.
+    DateTime selectedStartDate = DateTime.now();
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackgroundColor,
-        title: const Text('Add Medication'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Medication Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppTheme.cardBackgroundColor,
+          title: const Text('Add Medication'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Medication Name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: dosageController,
-                decoration: InputDecoration(
-                  labelText: 'Dosage',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: dosageController,
+                  decoration: InputDecoration(
+                    labelText: 'Dosage',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: frequencyController,
-                decoration: InputDecoration(
-                  labelText: 'Frequency',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: frequencyController,
+                  decoration: InputDecoration(
+                    labelText: 'Frequency',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedStartDate,
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now().add(const Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      setDialogState(() => selectedStartDate = picked);
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Start Date',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      '${selectedStartDate.year.toString().padLeft(4, '0')}-'
+                      '${selectedStartDate.month.toString().padLeft(2, '0')}-'
+                      '${selectedStartDate.day.toString().padLeft(2, '0')}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await ref.read(medicationProvider.notifier).addMedication(
+                  name: nameController.text,
+                  dosage: dosageController.text,
+                  frequency: frequencyController.text,
+                  schedule: ['08:00', '20:00'],
+                  startDate: selectedStartDate,
+                );
+                if (mounted) Navigator.pop(context);
+              },
+              child: const Text('Add'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await ref.read(medicationProvider.notifier).addMedication(
-                name: nameController.text,
-                dosage: dosageController.text,
-                frequency: frequencyController.text,
-                schedule: ['08:00', '20:00'],
-              );
-              if (mounted) Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }
